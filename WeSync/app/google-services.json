@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "135274099460",
+    "firebase_url": "https://we-sync-e42d9.firebaseio.com",
+    "project_id": "we-sync-e42d9",
+    "storage_bucket": "we-sync-e42d9.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:135274099460:android:115a3e667c606174269651",
+        "android_client_info": {
+          "package_name": "com.example.wesync"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "135274099460-si1qs6j4perl9o8e9rt7ir5p7dk4aqrr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB6R5l51PtCWbWpLpBrudmvlk28kJHqi40"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "135274099460-si1qs6j4perl9o8e9rt7ir5p7dk4aqrr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
