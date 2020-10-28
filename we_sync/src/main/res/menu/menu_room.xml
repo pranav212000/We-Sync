@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/action_create_room" android:title="Create Room"   />
+    <item android:id="@+id/action_join_room" android:title="Join Room" />
+</menu>
