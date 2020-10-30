@@ -1,36 +1,30 @@
 package com.example.wesync;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class room_activity extends AppCompatActivity {
+public class RoomActivity extends AppCompatActivity {
+
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     private EditText editTextName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_room_activity);
+        setContentView(R.layout.activity_room);
         Button button1 = (Button) findViewById(R.id.create);
         Button button2 = (Button) findViewById(R.id.join);
         SharedPreferences sp1 = this.getSharedPreferences("Login", MODE_PRIVATE);
@@ -50,15 +44,14 @@ public class room_activity extends AppCompatActivity {
 
 
                 finish();
-                startActivity(new Intent(room_activity.this, Create_Room.class));
+                startActivity(new Intent(RoomActivity.this, CreateRoomActivity.class));
             }
         });
 
 
     }
 
-    public String generateRoomId()
-    {
+    public String generateRoomId() {
         String AlphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                 + "abcdefghijklmnopqrstuvxyz";
 
@@ -70,7 +63,7 @@ public class room_activity extends AppCompatActivity {
             // generate a random number between
             // 0 to AlphaNumericString variable length
             int index
-                    = (int)(AlphaNumericString.length()
+                    = (int) (AlphaNumericString.length()
                     * Math.random());
 
             // add Character one by one in end of sb

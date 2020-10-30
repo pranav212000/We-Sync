@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "907677089068",
+    "firebase_url": "https://wesync-a138e.firebaseio.com",
+    "project_id": "wesync-a138e",
+    "storage_bucket": "wesync-a138e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:907677089068:android:6b2de58e894c7f91a88089",
+        "android_client_info": {
+          "package_name": "com.example.wesync"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "907677089068-qvuthpmkd857fmhppvl4fot2rcgn7bpo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBbZ52-B6k96kbPdojvOj3AOjfE6SW3-kM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "907677089068-qvuthpmkd857fmhppvl4fot2rcgn7bpo.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
