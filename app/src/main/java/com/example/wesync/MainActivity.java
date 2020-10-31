@@ -16,12 +16,13 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -31,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
     //    TODO replace all instances of progressDialog with
     private ProgressDialog progressDialog;
 
-
+    private User currentUser;
     private ActivityMainBinding binding;
 
     @Override
@@ -43,55 +44,55 @@ public class MainActivity extends AppCompatActivity {
         setContentView(view);
 
         progressDialog = new ProgressDialog(this);
+        getCurrentUser();
+        progressDialog.show();
 
 
-//        db.collection("users").document(firebaseAuth.getCurrentUser().getEmail()).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-//            @Override
-//            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-//                DocumentSnapshot document = task.getResult();
-//                Log.d(TAG, "Cached document data: " + document.getData());
-//                User user = new User(document.getString(Constants.EMAIL), document.getString(Constants.NAME));
-//
-//            }
-//        }).addOnFailureListener(new OnFailureListener() {
-//            @Override
-//            public void onFailure(@NonNull Exception e) {
-//
-//            }
-//        });
-//
-//        binding.createRoom.setOnClickListener(new View.OnClickListener() {
-//            public void onClick(View v) {
-//                // Do something in response to button click
-//
-//                progressDialog.setMessage("Registering Please Wait...");
-//                progressDialog.show();
-//
-//
-//                final String roomId = generateRoomId();
-//                String song = "";
-//                String host = username;
-//                final Map<String, Object> room = new HashMap<>();
-//                room.put(Constants.ROOM_ID, roomId);
-//                room.put(Constants.SONG, null);
-//                room.put(Constants.HOST, username);
-//                CollectionReference rooms = db.collection(Constants.ROOMS);
-//                rooms.document(roomId).set(room).addOnSuccessListener(new OnSuccessListener<Void>() {
-//                    @Override
-//                    public void onSuccess(Void aVoid) {
-//                        Intent intent = new Intent(MainActivity.this, RoomActivity.class);
-//                        intent.putExtra(Constants.ROOM_ID, roomId);
-//                        startActivity(intent);
-//                    }
-//                }).addOnFailureListener(new OnFailureListener() {
-//                    @Override
-//                    public void onFailure(@NonNull Exception e) {
-//                        Toast.makeText(MainActivity.this, "Could not create room, please try again!", Toast.LENGTH_SHORT).show();
-//                    }
-//                });
-//
-//            }
-//        });
+        binding.createRoom.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                progressDialog.setMessage("Registering Please Wait...");
+                progressDialog.show();
+                final String roomId = generateRoomId();
+                Room room = new Room(roomId, currentUser.userName, "", false, "", new ArrayList<User>());
+                addRoom(room);
+            }
+        });
+
+
+        binding.joinRoom.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final String roomId = binding.roomId.getText().toString().toUpperCase();
+                if (roomId.isEmpty()) {
+                    binding.roomId.setError("Please enter roomId");
+                } else if (roomId.length() != 7) {
+                    binding.roomId.setError("Enter valid roomId");
+                } else {
+                    progressDialog.show();
+                    db.collection(Constants.ROOMS_COLLECTION).document(roomId).update(Constants.MEMBERS, FieldValue.arrayUnion(currentUser.getUserName()))
+                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                @Override
+                                public void onSuccess(Void aVoid) {
+                                    Intent intent = new Intent(MainActivity.this, RoomActivity.class);
+                                    intent.putExtra(Constants.ROOM_ID, roomId);
+                                    startActivity(intent);
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    Toast.makeText(MainActivity.this, "Could not join the room", Toast.LENGTH_SHORT).show();
+                                }
+                            })
+                            .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    progressDialog.dismiss();
+                                }
+                            });
+                }
+            }
+        });
 
 
         binding.logOut.setOnClickListener(new View.OnClickListener() {
@@ -108,9 +109,59 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void getCurrentUser() {
+        progressDialog.show();
+        db.collection(Constants.USERS_COLLECTION)
+                .whereEqualTo(Constants.EMAIL, Objects.requireNonNull(firebaseAuth.getCurrentUser()).getEmail())
+                .get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+            @Override
+            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
+                    currentUser = documentSnapshot.toObject(User.class);
+                    Toast.makeText(MainActivity.this, currentUser.toString(), Toast.LENGTH_SHORT).show();
+                }
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.e(TAG, "onFailure: ", e);
+                Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        }).addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                progressDialog.dismiss();
+            }
+        });
+    }
+
+
+    public void addRoom(final Room room) {
+        db.collection(Constants.ROOMS).document(room.roomId).set(room)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        Intent intent = new Intent(MainActivity.this, RoomActivity.class);
+                        intent.putExtra(Constants.ROOM_ID, room.roomId);
+                        startActivity(intent);
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Toast.makeText(MainActivity.this, "Could not create room, please try again!", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        progressDialog.dismiss();
+                    }
+                });
+    }
+
     public String generateRoomId() {
-        String AlphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                + "abcdefghijklmnopqrstuvxyz";
+        String AlphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" + "1234567890";
 
         // create StringBuffer size of AlphaNumericString
         StringBuilder sb = new StringBuilder(7);

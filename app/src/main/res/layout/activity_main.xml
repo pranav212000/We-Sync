@@ -7,6 +7,13 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
+
+    <EditText
+        android:id="@+id/roomId"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:hint="Room Id"/>
+
     <Button
         android:id="@+id/joinRoom"
         android:layout_width="wrap_content"

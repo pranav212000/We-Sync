@@ -9,6 +9,7 @@ public class Constants {
     public static final String SONG = "song";
     public static final String ROOMS = "rooms";
     public static final String HOST = "host";
+    public static final String MEMBERS = "members";
     public static final String USERS_COLLECTION = "users";
     public static final String ROOMS_COLLECTION = "rooms";
 

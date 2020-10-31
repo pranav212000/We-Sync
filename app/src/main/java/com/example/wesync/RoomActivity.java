@@ -23,5 +23,7 @@ public class RoomActivity extends AppCompatActivity {
         Intent intent = getIntent();
         String roomId = intent.getStringExtra(Constants.ROOM_ID);
         binding.roomId.setText(roomId);
+
+
     }
 }
