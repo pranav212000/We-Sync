@@ -12,17 +12,17 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.wesync.databinding.ActivityMainBinding;
 import com.example.wesync.databinding.ActivitySignUpBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class SignUpActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -61,9 +61,10 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
     private void registerUser() {
 
         //getting email and password from edit texts
-        String email = binding.email.getText().toString().trim();
-        String password = binding.password.getText().toString().trim();
+        final String email = binding.email.getText().toString().trim();
+        final String password = binding.password.getText().toString().trim();
         String name = binding.name.getText().toString().trim();
+        final String userName = binding.userName.getText().toString().trim();
         SharedPreferences preferences = getSharedPreferences(Constants.LOGIN, MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putString(Constants.USERNAME, name);
@@ -86,48 +87,53 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
         progressDialog.setMessage("Registering Please Wait...");
         progressDialog.show();
 
-        //creating a new user
-        firebaseAuth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        //checking if success
-                        if (task.isSuccessful()) {
-//                            Map<String, String> user = new HashMap<>();
-                            String email = binding.email.getText().toString().trim();
-                            String name = binding.name.getText().toString().trim();
-//                            user.put(Constants.EMAIL, email);
-//                            user.put(Constants.NAME, name);
 
-                            User user = new User(email, name);
-                            /*db.collection("users")
-                                    .add(user)
-                                    .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                                        @Override
-                                        public void onSuccess(DocumentReference documentReference) {
-                                            System.out.println("Added");
-                                        }
-                                    })
-                                    .addOnFailureListener(new OnFailureListener() {
-                                        @Override
-                                        public void onFailure(@NonNull Exception e) {
-                                            System.out.println("Failure");
-                                        }
-                                    });*/
-                            CollectionReference users = db.collection("users");
-                            users.document(email).set(user);
+        DocumentReference documentReference = db.collection(Constants.USERS_COLLECTION).document(userName);
+        documentReference.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+            @Override
+            public void onSuccess(DocumentSnapshot documentSnapshot) {
+                if (documentSnapshot.exists()) {
+//                    Username exists choose another username;
+                    binding.userName.setError("Username exists, please use another username");
+                    Toast.makeText(SignUpActivity.this, "Username already exists", Toast.LENGTH_SHORT).show();
+                    progressDialog.dismiss();
+                } else {
+                    firebaseAuth.createUserWithEmailAndPassword(email, password)
+                            .addOnSuccessListener(new OnSuccessListener<AuthResult>() {
+                                @Override
+                                public void onSuccess(AuthResult authResult) {
+                                    String email = binding.email.getText().toString().trim();
+                                    String name = binding.name.getText().toString().trim();
+                                    User user = new User(email, name, userName);
+                                    CollectionReference users = db.collection(Constants.USERS_COLLECTION);
+                                    users.document(userName).set(user);
+                                    startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                                    finish();
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    Log.e(TAG, "onFailure: ", e);
+                                    Toast.makeText(SignUpActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
+                                }
+                            })
+                            .addOnCompleteListener(SignUpActivity.this, new OnCompleteListener<AuthResult>() {
+                                @Override
+                                public void onComplete(@NonNull Task<AuthResult> task) {
+                                    progressDialog.dismiss();
+                                }
+                            });
+                }
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Toast.makeText(SignUpActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                progressDialog.dismiss();
+            }
+        });
 
-                            startActivity(new Intent(getApplicationContext(), MainActivity.class));
-                            finish();
-
-                        } else {
-                            Log.e(TAG, "onComplete: task unsuccessful, error : ", task.getException());
-                            //display some message here
-                            Toast.makeText(SignUpActivity.this, "Registration Error", Toast.LENGTH_LONG).show();
-                        }
-                        progressDialog.dismiss();
-                    }
-                });
 
     }
 
