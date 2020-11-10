@@ -12,6 +12,7 @@
         android:id="@+id/roomId"
         android:layout_width="150dp"
         android:layout_height="wrap_content"
+        android:text="0nm80hl"
         android:hint="Room Id"/>
 
     <Button
