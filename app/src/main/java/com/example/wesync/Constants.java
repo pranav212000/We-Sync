@@ -1,5 +1,10 @@
 package com.example.wesync;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
+
 public class Constants {
     public static final String USERNAME = "username";
     public static final String EMAIL = "email";
@@ -14,4 +19,40 @@ public class Constants {
     public static final String ROOMS_COLLECTION = "rooms";
     public static final String ACCESS_TOKEN = "access_token";
     public static final String PREFERENCES = "prefs";
+    public static final String CLIENT_ID = "3d7fabbd1e03480aa9ac4c68f0a7c360";
+    public static final String CLIENT_SECRET = "ae0df2e9591f45b19a83a984e5feabfc";
+    public static final String REDIRECT_URI = "http://localhost:8888/callback";
+    public static final String REFRESH_TOKEN = "refresh_token";
+    public static final String REFRESH_TIME = "refresh_time";
+    public static final String TOKEN_TYPE = "Bearer";
+
+
+    public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+
+    public static Date getUTCdatetimeAsDate() {
+        // note: doesn't check for null
+        return stringDateToDate(getUTCdatetimeAsString());
+    }
+
+    public static String getUTCdatetimeAsString() {
+        final SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        final String utcTime = sdf.format(new Date());
+
+        return utcTime;
+    }
+
+    public static Date stringDateToDate(String StrDate) {
+        Date dateToReturn = null;
+        SimpleDateFormat dateFormat = new SimpleDateFormat(Constants.DATE_FORMAT);
+
+        try {
+            dateToReturn = (Date) dateFormat.parse(StrDate);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        return dateToReturn;
+    }
+
 }

@@ -2,6 +2,7 @@ package com.example.wesync;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -21,8 +22,23 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Objects;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -46,6 +62,83 @@ public class MainActivity extends AppCompatActivity {
         progressDialog = new ProgressDialog(this);
         getCurrentUser();
         progressDialog.show();
+
+        final SharedPreferences preferences = this.getSharedPreferences(Constants.PREFERENCES, MODE_PRIVATE);
+        String refreshDateString = preferences.getString(Constants.REFRESH_TIME, "");
+        String refreshToken = preferences.getString(Constants.REFRESH_TOKEN, "");
+
+        Log.d(TAG, "onCreate: ref date : " + refreshDateString);
+        Log.d(TAG, "onCreate: ref token : " + refreshToken);
+        assert refreshToken != null;
+        assert refreshDateString != null;
+        if (!refreshToken.isEmpty() && !refreshDateString.isEmpty()) {
+            Date refreshDate = Constants.stringDateToDate(refreshDateString);
+            Date currentDate = Constants.getUTCdatetimeAsDate();
+
+
+            long diff = currentDate.getTime() - refreshDate.getTime();
+//        int numOfDays = (int) (diff / (1000 * 60 * 60 * 24));
+//        int hours = (int) (diff / (1000 * 60 * 60));
+//        int minutes = (int) (diff / (1000 * 60));
+            int seconds = (int) (diff / (1000));
+            Log.d(TAG, "onCreate: seconds : " + seconds);
+            if (seconds > 3200) {
+
+                HttpUrl url = new HttpUrl.Builder()
+                        .scheme("https")
+                        .host("accounts.spotify.com")
+                        .addPathSegment("api")
+                        .addPathSegment("token").build();
+
+                OkHttpClient client = new OkHttpClient();
+
+
+                RequestBody requestBody = new FormBody.Builder()
+                        .addEncoded("grant_type", "refresh_token")
+                        .addEncoded("refresh_token", refreshToken)
+                        .build();
+
+
+                Request request = new Request.Builder()
+                        .url(url)
+                        .addHeader("ContentType", "application/x-www-form-urlencoded")
+                        .addHeader("Authorization", "Basic M2Q3ZmFiYmQxZTAzNDgwYWE5YWM0YzY4ZjBhN2MzNjA6YWUwZGYyZTk1OTFmNDViMTlhODNhOTg0ZTVmZWFiZmM=")
+                        .post(requestBody)
+                        .build();
+
+                client.newCall(request).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        Log.e(TAG, "onFailure: token refresh failure : ", e);
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+
+                        if (response.body() != null) {
+                            ResponseBody responseBody = response.body();
+
+                            try {
+//                                CAN BE CONSUMED ONLY ONCE (body.string())
+                                String responseString = responseBody.string();
+                                Log.d(TAG, "onResponse: response String : " + responseString);
+                                JSONObject object = new JSONObject(responseString);
+                                String accessToken = object.getString(Constants.ACCESS_TOKEN);
+                                SharedPreferences.Editor editor = preferences.edit();
+                                editor.putString(Constants.ACCESS_TOKEN, accessToken);
+                                editor.putString(Constants.REFRESH_TIME, Constants.getUTCdatetimeAsString());
+                                editor.apply();
+
+
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                });
+            }
+
+        }
 
 
         binding.createRoom.setOnClickListener(new View.OnClickListener() {

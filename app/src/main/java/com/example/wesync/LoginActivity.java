@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -18,21 +19,40 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.gson.Gson;
 import com.spotify.sdk.android.auth.AuthorizationClient;
 import com.spotify.sdk.android.auth.AuthorizationRequest;
 import com.spotify.sdk.android.auth.AuthorizationResponse;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
 
 
     public static final int AUTH_TOKEN_REQUEST_CODE = 0x10;
+    public static final int AUTH_CODE_REQUEST_CODE = 0x11;
     private static final String TAG = "LoginActivity";
-    private static final String CLIENT_ID = "3d7fabbd1e03480aa9ac4c68f0a7c360";
-    private static final String REDIRECT_URI = "http://localhost:8888/callback";
+
     private String mAccessToken;
+    private String mAccessCode;
     private ActivityLoginBinding binding;
     private FirebaseAuth firebaseAuth;
     private ProgressDialog progressDialog;
+    private String mRefreshToken;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,8 +102,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         //if the task is successfull
                         if (task.isSuccessful()) {
                             //start the profile activity
-                            final AuthorizationRequest request = getAuthenticationRequest(AuthorizationResponse.Type.TOKEN);
-                            AuthorizationClient.openLoginActivity(LoginActivity.this, AUTH_TOKEN_REQUEST_CODE, request);
+                            final AuthorizationRequest request = getAuthenticationRequest(AuthorizationResponse.Type.CODE);
+                            AuthorizationClient.openLoginActivity(LoginActivity.this, AUTH_CODE_REQUEST_CODE, request);
 
                         }
                     }
@@ -102,7 +122,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
 
     private AuthorizationRequest getAuthenticationRequest(AuthorizationResponse.Type type) {
-        return new AuthorizationRequest.Builder(CLIENT_ID, type, getRedirectUri().toString())
+        return new AuthorizationRequest.Builder(Constants.CLIENT_ID, type, getRedirectUri().toString())
                 .setShowDialog(false)
                 .setScopes(new String[]{
                         "user-read-email",
@@ -118,7 +138,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     }
 
     private Uri getRedirectUri() {
-        return Uri.parse(REDIRECT_URI);
+        return Uri.parse(Constants.REDIRECT_URI);
     }
 
     @Override
@@ -139,13 +159,82 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             editor.putString(Constants.ACCESS_TOKEN, response.getAccessToken());
             mAccessToken = response.getAccessToken();
             editor.apply();
-//        } else if (requestCode == AUTH_CODE_REQUEST_CODE) {
-//            mAccessCode = response.getCode();
-//            SharedPreferences preferences = this.getSharedPreferences("prefs", MODE_PRIVATE);
-//            SharedPreferences.Editor editor = preferences.edit();
-//            editor.putString("code", response.getCode());
-//            mAccessCode = response.getCode();
-//            editor.apply();
+        } else if (requestCode == AUTH_CODE_REQUEST_CODE) {
+            mAccessCode = response.getCode();
+            final SharedPreferences preferences = this.getSharedPreferences("prefs", MODE_PRIVATE);
+            final SharedPreferences.Editor editor = preferences.edit();
+            editor.putString("code", response.getCode());
+            mAccessCode = response.getCode();
+            editor.apply();
+
+
+            HttpUrl url = new HttpUrl.Builder()
+                    .scheme("https")
+                    .host("accounts.spotify.com")
+                    .addPathSegment("api")
+                    .addPathSegment("token").build();
+
+            OkHttpClient client = new OkHttpClient();
+
+
+            RequestBody requestBody = new FormBody.Builder()
+                    .addEncoded("grant_type", "authorization_code")
+                    .addEncoded("code", mAccessCode)
+                    .addEncoded("redirect_uri", Constants.REDIRECT_URI)
+                    .build();
+
+            String text = Constants.CLIENT_ID + ':' + Constants.CLIENT_SECRET;
+
+            byte[] temp = new byte[0];
+            try {
+                temp = text.getBytes("UTF-8");
+
+                String base64 = Base64.encodeToString(temp, Base64.DEFAULT);
+
+                Request request = new Request.Builder()
+                        .url(url)
+                        .addHeader("ContentType", "application/x-www-form-urlencoded")
+                        .addHeader("Authorization", "Basic M2Q3ZmFiYmQxZTAzNDgwYWE5YWM0YzY4ZjBhN2MzNjA6YWUwZGYyZTk1OTFmNDViMTlhODNhOTg0ZTVmZWFiZmM=")
+                        .post(requestBody)
+                        .build();
+                client.newCall(request).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        Log.e(TAG, "onFailure: FAILED : ", e);
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+
+//                        Log.d(TAG, "onResponse: response : " + response.toString());
+//                        Log.d(TAG, "onResponse: response body : " + response.body().string());
+
+                        if (response.body() != null) {
+                            ResponseBody responseBody = response.body();
+
+                            try {
+//                                CAN BE CONSUMED ONLY ONCE (body.string())
+                                String responseString = responseBody.string();
+                                Log.d(TAG, "onResponse: response String : " + responseString);
+                                JSONObject object = new JSONObject(responseString);
+                                mAccessToken = object.getString(Constants.ACCESS_TOKEN);
+                                mRefreshToken = object.getString(Constants.REFRESH_TOKEN);
+
+                                editor.putString(Constants.REFRESH_TOKEN, mRefreshToken);
+                                editor.putString(Constants.ACCESS_TOKEN, mAccessToken);
+                                editor.putString(Constants.REFRESH_TIME, Constants.getUTCdatetimeAsString());
+                                editor.apply();
+
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                });
+
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
 
 
             startActivity(new Intent(getApplicationContext(), MainActivity.class));
