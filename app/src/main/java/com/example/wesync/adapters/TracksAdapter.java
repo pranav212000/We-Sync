@@ -57,6 +57,7 @@ public class TracksAdapter extends BaseAdapter {
 //            TextView subTitle = (TextView) grid.findViewById(R.id.subtitle);
             ImageView imageView = (ImageView) grid.findViewById(R.id.track_image);
             title.setText(mTrackArrayList.get(position).name);
+            title.setSelected(true);
 
             if (mTrackArrayList.get(position).album.images.size() != 0)
                 Glide.with(mContext)

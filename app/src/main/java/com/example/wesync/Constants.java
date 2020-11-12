@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 
 public class Constants {
     public static final String USERNAME = "username";
@@ -55,4 +56,10 @@ public class Constants {
         return dateToReturn;
     }
 
+    public static String getTimeFormLong(long millis) {
+        String str = String.format("%02d:%02d",
+                TimeUnit.MILLISECONDS.toMinutes(millis) % TimeUnit.HOURS.toMinutes(1),
+                TimeUnit.MILLISECONDS.toSeconds(millis) % TimeUnit.MINUTES.toSeconds(1));
+        return str;
+    }
 }

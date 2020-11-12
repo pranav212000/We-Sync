@@ -3,27 +3,36 @@ package com.example.wesync;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.GridView;
+import android.widget.SeekBar;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.wesync.adapters.TracksAdapter;
 import com.example.wesync.databinding.ActivityRoomBinding;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.spotify.android.appremote.api.ConnectionParams;
 import com.spotify.android.appremote.api.Connector;
 import com.spotify.android.appremote.api.PlayerApi;
 import com.spotify.android.appremote.api.SpotifyAppRemote;
 import com.spotify.protocol.client.CallResult;
 import com.spotify.protocol.client.ErrorCallback;
+import com.spotify.protocol.client.Subscription;
+import com.spotify.protocol.types.Artist;
 import com.spotify.protocol.types.Empty;
+import com.spotify.protocol.types.PlayerState;
+import com.spotify.protocol.types.Repeat;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
@@ -44,7 +53,12 @@ public class RoomActivity extends AppCompatActivity {
     private SpotifyAppRemote mSpotifyAppRemote;
     private PlayerApi playerApi;
     private boolean isPlaying = false;
-    private String currentTrack;
+    private String currentTrackUri;
+    private long duration;
+    private int repeat = 0;
+
+    private BottomSheetBehavior mBottomSheetBehavior;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +74,98 @@ public class RoomActivity extends AppCompatActivity {
         Intent intent = getIntent();
         String roomId = intent.getStringExtra(Constants.ROOM_ID);
         binding.roomId.setText(roomId);
+
+        View.OnClickListener playPauseListener = view -> {
+            if (isPlaying) {
+                playerApi.pause().setResultCallback(empty -> {
+                    pause();
+                }).setErrorCallback(throwable -> Toast.makeText(RoomActivity.this, throwable.getMessage(), Toast.LENGTH_SHORT).show());
+
+            } else {
+                if (currentTrackUri != null && !currentTrackUri.isEmpty())
+                    playerApi.resume().setResultCallback(empty -> {
+                        play();
+                    }).setErrorCallback(new ErrorCallback() {
+                        @Override
+                        public void onError(Throwable throwable) {
+                            Toast.makeText(RoomActivity.this, throwable.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+            }
+        };
+
+        binding.bottomSheetPlayPause.setOnClickListener(playPauseListener);
+        binding.playPause.setOnClickListener(playPauseListener);
+        binding.closeBottomSheet.setOnClickListener(view -> mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED));
+        binding.skipNext.setOnClickListener(view -> playerApi.skipNext());
+
+        binding.skipPrevious.setOnClickListener(view -> playerApi.skipPrevious());
+
+        binding.repeat.setOnClickListener(view -> {
+            repeat = (repeat + 1) % 3;
+            switch (repeat) {
+                case Repeat.OFF:
+                    playerApi.setRepeat(Repeat.OFF).setResultCallback(empty -> binding.repeat.setImageResource(R.drawable.ic_repeat_off));
+                    break;
+                case Repeat.ONE:
+                    playerApi.setRepeat(Repeat.ONE).setResultCallback(empty -> binding.repeat.setImageResource(R.drawable.ic_repeat_one));
+                    break;
+                case Repeat.ALL:
+                    playerApi.setRepeat(Repeat.ALL).setResultCallback(empty -> binding.repeat.setImageResource(R.drawable.ic_repeat));
+                    break;
+                default:
+            }
+
+        });
+
+        binding.seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (playerApi == null) {
+                    Toast.makeText(RoomActivity.this, "Spotify not connected yet!", Toast.LENGTH_SHORT).show();
+                } else {
+                    if (fromUser) {
+
+                        long currentPosition = duration * progress / 100;
+
+                        playerApi.seekTo(currentPosition);
+                        binding.start.setText(Constants.getTimeFormLong(currentPosition));
+                        binding.end.setText(Constants.getTimeFormLong(duration - currentPosition));
+
+                    }
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+//                TODO pause while seeking!
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        mBottomSheetBehavior = BottomSheetBehavior.from(binding.bottomSheet);
+
+        mBottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                if (newState == BottomSheetBehavior.STATE_EXPANDED)
+                    binding.peekView.setVisibility(View.GONE);
+                else if (newState == BottomSheetBehavior.STATE_COLLAPSED)
+                    binding.peekView.setVisibility(View.VISIBLE);
+
+            }
+
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+
+            }
+        });
 
 
         binding.search.addTextChangedListener(new TextWatcher() {
@@ -82,30 +188,15 @@ public class RoomActivity extends AppCompatActivity {
             }
         });
 
-//TODO subscribe to player state and check for externam pause or play and change the icon accordingly
-        binding.playPause.setOnClickListener(view -> {
-            if (isPlaying) {
-                playerApi.pause().setResultCallback(empty -> {
-                    binding.playPause.setImageResource(R.drawable.ic_play);
-                    isPlaying = false;
-                }).setErrorCallback(throwable -> Toast.makeText(RoomActivity.this, throwable.getMessage(), Toast.LENGTH_SHORT).show());
 
-            } else {
-                if (currentTrack != null && !currentTrack.isEmpty())
-                    playerApi.resume().setResultCallback(empty -> {
-                        binding.playPause.setImageResource(R.drawable.ic_pause);
-                        isPlaying = true;
-                    }).setErrorCallback(new ErrorCallback() {
-                        @Override
-                        public void onError(Throwable throwable) {
-                            Toast.makeText(RoomActivity.this, throwable.getMessage(), Toast.LENGTH_SHORT).show();
-                        }
-                    });
-
-            }
-        });
     }
 
+    @Override
+    public void onBackPressed() {
+        if (mBottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
+            mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        } else finish();
+    }
 
     private void searchTrack(CharSequence charSequence) {
         final SpotifyApi api = new SpotifyApi();
@@ -148,7 +239,7 @@ public class RoomActivity extends AppCompatActivity {
                     public void onResult(Empty empty) {
                         Log.d(TAG, "onResult: Playing");
                         isPlaying = true;
-                        currentTrack = track.uri;
+                        currentTrackUri = track.uri;
                         binding.trackTextView.setText(track.name);
                     }
                 }).setErrorCallback(new ErrorCallback() {
@@ -183,6 +274,64 @@ public class RoomActivity extends AppCompatActivity {
                         playerApi = mSpotifyAppRemote.getPlayerApi();
 
                         // Now you can start interacting with App Remote
+
+                        playerApi.subscribeToPlayerState().setEventCallback(new Subscription.EventCallback<PlayerState>() {
+                            @Override
+                            public void onEvent(PlayerState playerState) {
+                                final com.spotify.protocol.types.Track track = playerState.track;
+                                if (track != null) {
+
+                                    duration = track.duration;
+                                    binding.trackTextView.setText(track.name);
+                                    binding.title.setText(track.name);
+
+                                    List<Artist> artists = track.artists;
+
+                                    StringBuilder builder = new StringBuilder();
+                                    for (Artist artist : artists) {
+                                        builder.append(artist.name);
+                                        builder.append(", ");
+                                    }
+
+                                    builder.delete(builder.lastIndexOf(","), builder.lastIndexOf(",") + 1);
+
+
+                                    binding.artists.setText(builder);
+                                    binding.artists.setSelected(true);
+                                    mSpotifyAppRemote.getImagesApi().getImage(track.imageUri).setResultCallback(bitmap -> binding.trackImage.setImageBitmap(bitmap));
+
+
+                                    currentTrackUri = playerState.track.uri;
+                                    if (playerState.isPaused)
+                                        pause();
+                                    else
+                                        play();
+
+
+                                    Handler handler = new Handler();
+
+                                    final Runnable r = new Runnable() {
+                                        public void run() {
+                                            playerApi.getPlayerState().setResultCallback(new CallResult.ResultCallback<PlayerState>() {
+                                                @Override
+                                                public void onResult(PlayerState playerState) {
+                                                    Log.d(TAG, "onResult: position : " + playerState.playbackPosition);
+                                                    Log.d(TAG, "onResult: position : " + duration);
+                                                    Log.d(TAG, "onResult: position : " + (double) playerState.playbackPosition / (double) duration);
+                                                    Log.d(TAG, "onResult: current position : " + ((playerState.playbackPosition / duration) * 100));
+                                                    binding.seekbar.setProgress((int) ((double) playerState.playbackPosition / (double) duration * 100));
+                                                    binding.start.setText(Constants.getTimeFormLong(playerState.playbackPosition));
+                                                    binding.end.setText(Constants.getTimeFormLong(duration - playerState.playbackPosition));
+                                                }
+                                            });
+                                            if (!playerState.isPaused)
+                                                handler.postDelayed(this, 500);
+                                        }
+                                    };
+                                    handler.postDelayed(r, 1000);
+                                }
+                            }
+                        });
                     }
 
                     public void onFailure(Throwable throwable) {
@@ -191,5 +340,19 @@ public class RoomActivity extends AppCompatActivity {
                         // Something went wrong when attempting to connect! Handle errors here
                     }
                 });
+
+    }
+
+
+    private void play() {
+        isPlaying = true;
+        binding.bottomSheetPlayPause.setImageResource(R.drawable.ic_pause);
+        binding.playPause.setImageResource(R.drawable.ic_pause_white);
+    }
+
+    private void pause() {
+        isPlaying = false;
+        binding.bottomSheetPlayPause.setImageResource(R.drawable.ic_play);
+        binding.playPause.setImageResource(R.drawable.ic_play_white);
     }
 }
