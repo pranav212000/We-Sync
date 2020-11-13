@@ -1,9 +1,14 @@
-package com.example.wesync;
+package com.example.wesync.models;
+
+import com.google.gson.annotations.SerializedName;
 
 public class User {
 
+    @SerializedName("email")
     String email;
+    @SerializedName("name")
     String name;
+    @SerializedName("userName")
     String userName;
 
     //required constructor

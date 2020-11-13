@@ -12,6 +12,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.wesync.databinding.ActivityMainBinding;
+import com.example.wesync.models.Room;
+import com.example.wesync.models.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -21,6 +23,7 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.gson.Gson;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -72,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
         assert refreshToken != null;
         assert refreshDateString != null;
         if (!refreshToken.isEmpty() && !refreshDateString.isEmpty()) {
-            Date refreshDate = Constants.stringDateToDate(refreshDateString);
+            Date refreshDate = Constants.getStringDateToDate(refreshDateString);
             Date currentDate = Constants.getUTCdatetimeAsDate();
 
 
@@ -146,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
                 progressDialog.setMessage("Registering Please Wait...");
                 progressDialog.show();
                 final String roomId = generateRoomId();
-                Room room = new Room(roomId, currentUser.userName, "", false, "", new ArrayList<User>());
+                Room room = new Room(roomId, currentUser.getUserName(), "", false, Constants.getUTCdatetimeAsString(), false, 0, new ArrayList<>(), 0, currentUser.getUserName());
                 addRoom(room);
             }
         });
@@ -166,22 +169,29 @@ public class MainActivity extends AppCompatActivity {
                             .addOnSuccessListener(new OnSuccessListener<Void>() {
                                 @Override
                                 public void onSuccess(Void aVoid) {
-                                    Intent intent = new Intent(MainActivity.this, RoomActivity.class);
-                                    intent.putExtra(Constants.ROOM_ID, roomId);
-                                    startActivity(intent);
+
+                                    db.collection(Constants.ROOMS_COLLECTION)
+                                            .document(roomId)
+                                            .get()
+                                            .addOnSuccessListener(documentSnapshot -> {
+                                                if (documentSnapshot.exists()) {
+                                                    Log.d(TAG, "onSuccess: document data : " + documentSnapshot.getData().toString());
+                                                    Room room = documentSnapshot.toObject(Room.class);
+                                                    Intent intent = new Intent(MainActivity.this, RoomActivity.class);
+                                                    intent.putExtra(Constants.USERNAME, currentUser.getUserName());
+                                                    Gson gson = new Gson();
+                                                    intent.putExtra(Constants.ROOM, gson.toJson(room));
+                                                    startActivity(intent);
+                                                }
+                                            })
+                                            .addOnFailureListener(e -> Log.e(TAG, "onFailure: " + e.getMessage()))
+                                            .addOnCompleteListener(task -> progressDialog.dismiss());
+
                                 }
                             })
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    Toast.makeText(MainActivity.this, "Could not join the room", Toast.LENGTH_SHORT).show();
-                                }
-                            })
-                            .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-                                    progressDialog.dismiss();
-                                }
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(MainActivity.this, "Could not join the room", Toast.LENGTH_SHORT).show();
+                                progressDialog.dismiss();
                             });
                 }
             }
@@ -230,12 +240,14 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void addRoom(final Room room) {
-        db.collection(Constants.ROOMS).document(room.roomId).set(room)
+        db.collection(Constants.ROOMS).document(room.getRoomId()).set(room)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
                         Intent intent = new Intent(MainActivity.this, RoomActivity.class);
-                        intent.putExtra(Constants.ROOM_ID, room.roomId);
+                        Gson gson = new Gson();
+                        intent.putExtra(Constants.USERNAME, currentUser.getUserName());
+                        intent.putExtra(Constants.ROOM, gson.toJson(room));
                         startActivity(intent);
                     }
                 })

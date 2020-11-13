@@ -12,6 +12,7 @@ public class Constants {
     public static final String NAME = "name";
     public static final String LOGIN = "login";
     public static final String ROOM_ID = "roomId";
+    public static final String ROOM = "room";
     public static final String SONG = "song";
     public static final String ROOMS = "rooms";
     public static final String HOST = "host";
@@ -32,7 +33,7 @@ public class Constants {
 
     public static Date getUTCdatetimeAsDate() {
         // note: doesn't check for null
-        return stringDateToDate(getUTCdatetimeAsString());
+        return getStringDateToDate(getUTCdatetimeAsString());
     }
 
     public static String getUTCdatetimeAsString() {
@@ -43,7 +44,7 @@ public class Constants {
         return utcTime;
     }
 
-    public static Date stringDateToDate(String StrDate) {
+    public static Date getStringDateToDate(String StrDate) {
         Date dateToReturn = null;
         SimpleDateFormat dateFormat = new SimpleDateFormat(Constants.DATE_FORMAT);
 
