@@ -12,8 +12,8 @@
         android:id="@+id/roomId"
         android:layout_width="150dp"
         android:layout_height="wrap_content"
-        android:text="0nm80hl"
-        android:hint="Room Id"/>
+        android:hint="Room Id"
+        android:text="R7H9QCS" />
 
     <Button
         android:id="@+id/joinRoom"
@@ -28,6 +28,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
         android:text="CREATE ROOM" />
+
     <Button
         android:id="@+id/logOut"
         android:layout_width="wrap_content"
@@ -36,4 +37,4 @@
         android:text="LOG OUT" />
 
 
-    </LinearLayout>
+</LinearLayout>

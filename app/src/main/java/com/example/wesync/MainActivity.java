@@ -18,6 +18,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -109,6 +110,7 @@ public class MainActivity extends AppCompatActivity {
                         .post(requestBody)
                         .build();
 
+                Log.d(TAG, "onCreate: making token request");
                 client.newCall(request).enqueue(new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
@@ -149,7 +151,7 @@ public class MainActivity extends AppCompatActivity {
                 progressDialog.setMessage("Registering Please Wait...");
                 progressDialog.show();
                 final String roomId = generateRoomId();
-                Room room = new Room(roomId, currentUser.getUserName(), "", false, Constants.getUTCdatetimeAsString(), false, 0, new ArrayList<>(), 0, currentUser.getUserName());
+                Room room = new Room(roomId, currentUser.getUserName(), "", false, Timestamp.now(), false, 0, new ArrayList<>(), 0, currentUser.getUserName());
                 addRoom(room);
             }
         });

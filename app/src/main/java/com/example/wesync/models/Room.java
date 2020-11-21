@@ -1,10 +1,14 @@
 package com.example.wesync.models;
 
+import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.FieldValue;
 import com.google.gson.annotations.SerializedName;
 
+import java.io.Serializable;
+import java.sql.Time;
 import java.util.ArrayList;
 
-public class Room {
+public class Room implements Serializable    {
     @SerializedName("roomId")
     String roomId;
     @SerializedName("host")
@@ -14,11 +18,12 @@ public class Room {
     @SerializedName("reSync")
     boolean reSync;
     @SerializedName("updateTime")
-    String updateTime;
+    Timestamp updateTime;
     @SerializedName("isPlaying")
     boolean isPlaying;
     @SerializedName("currentPosition")
     long currentPosition;
+//    TODO remove members field from room class! for making it easier for serverTimestamp.
     @SerializedName("members")
     ArrayList<String> members;
     @SerializedName("repeat")
@@ -26,11 +31,12 @@ public class Room {
     @SerializedName("lastUpdateBy")
     String lastUpdateBy;
 
+
     //REQUIRED EMPTY CONSTRUCTOR
     public Room() {
     }
 
-    public Room(String roomId, String host, String trackUri, boolean reSync, String updateTime, boolean isPlaying, long currentPosition, ArrayList<String> members, int repeat, String lastUpdateBy) {
+    public Room(String roomId, String host, String trackUri, boolean reSync, Timestamp updateTime, boolean isPlaying, long currentPosition, ArrayList<String> members, int repeat, String lastUpdateBy) {
         this.roomId = roomId;
         this.host = host;
         this.trackUri = trackUri;
@@ -42,7 +48,6 @@ public class Room {
         this.repeat = repeat;
         this.lastUpdateBy = lastUpdateBy;
     }
-
 
     public String getRoomId() {
         return roomId;
@@ -76,11 +81,11 @@ public class Room {
         this.reSync = reSync;
     }
 
-    public String getUpdateTime() {
+    public Timestamp getUpdateTime() {
         return updateTime;
     }
 
-    public void setUpdateTime(String updateTime) {
+    public void setUpdateTime(Timestamp updateTime) {
         this.updateTime = updateTime;
     }
 
@@ -124,6 +129,24 @@ public class Room {
         this.lastUpdateBy = lastUpdateBy;
     }
 
+
+//    @Override
+//    public String toString() {
+//        return "Room{" +
+//                "roomId='" + roomId + '\'' +
+//                ", host='" + host + '\'' +
+//                ", trackUri='" + trackUri + '\'' +
+//                ", reSync=" + reSync +
+//                ", updateTime='" + updateTime + '\'' +
+//                ", isPlaying=" + isPlaying +
+//                ", currentPosition=" + currentPosition +
+//                ", members=" + members +
+//                ", repeat=" + repeat +
+//                ", lastUpdateBy='" + lastUpdateBy + '\'' +
+//                '}';
+//    }
+
+
     @Override
     public String toString() {
         return "Room{" +
@@ -131,7 +154,7 @@ public class Room {
                 ", host='" + host + '\'' +
                 ", trackUri='" + trackUri + '\'' +
                 ", reSync=" + reSync +
-                ", updateTime='" + updateTime + '\'' +
+                ", updateTime=" + updateTime +
                 ", isPlaying=" + isPlaying +
                 ", currentPosition=" + currentPosition +
                 ", members=" + members +

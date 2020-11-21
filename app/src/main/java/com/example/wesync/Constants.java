@@ -27,7 +27,7 @@ public class Constants {
     public static final String REFRESH_TOKEN = "refresh_token";
     public static final String REFRESH_TIME = "refresh_time";
     public static final String TOKEN_TYPE = "Bearer";
-
+    public static final String UPDATE_TIME = "updateTime";
 
     public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
@@ -38,7 +38,8 @@ public class Constants {
 
     public static String getUTCdatetimeAsString() {
         final SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
-        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+//        TODO maybe change from IST to UTC later on!
+        sdf.setTimeZone(TimeZone.getTimeZone("IST"));
         final String utcTime = sdf.format(new Date());
 
         return utcTime;
