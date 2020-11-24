@@ -13,7 +13,7 @@
         android:layout_width="150dp"
         android:layout_height="wrap_content"
         android:hint="Room Id"
-        android:text="R7H9QCS" />
+        android:text="oykkxnu" />
 
     <Button
         android:id="@+id/joinRoom"

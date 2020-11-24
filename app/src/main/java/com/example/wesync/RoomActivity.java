@@ -136,27 +136,7 @@ public class RoomActivity extends AppCompatActivity {
 
         binding.repeat.setOnClickListener(view -> {
             mRoom.setRepeat((mRoom.getRepeat() + 1) % 3);
-            switch (mRoom.getRepeat()) {
-                case Repeat.OFF:
-                    playerApi.setRepeat(Repeat.OFF).setResultCallback(empty -> {
-                        Toast.makeText(this, "Repeat off", Toast.LENGTH_SHORT).show();
-                        binding.repeat.setImageResource(R.drawable.ic_repeat_off);
-                    });
-                    break;
-                case Repeat.ONE:
-                    playerApi.setRepeat(Repeat.ONE).setResultCallback(empty -> {
-                        Toast.makeText(this, "Repeat one", Toast.LENGTH_SHORT).show();
-                        binding.repeat.setImageResource(R.drawable.ic_repeat_one);
-                    });
-                    break;
-                case Repeat.ALL:
-                    playerApi.setRepeat(Repeat.ALL).setResultCallback(empty -> {
-                        Toast.makeText(this, "Repeat all", Toast.LENGTH_SHORT).show();
-                        binding.repeat.setImageResource(R.drawable.ic_repeat);
-                    });
-                    break;
-                default:
-            }
+            setRepeat(mRoom.getRepeat());
             updateDb();
 
         });
@@ -244,6 +224,31 @@ public class RoomActivity extends AppCompatActivity {
         if (mBottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
             mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
         } else finish();
+    }
+
+
+    private void setRepeat(int repeat) {
+        switch (repeat) {
+            case Repeat.OFF:
+                playerApi.setRepeat(Repeat.OFF).setResultCallback(empty -> {
+//                    Toast.makeText(this, "Repeat off", Toast.LENGTH_SHORT).show();
+                    binding.repeat.setImageResource(R.drawable.ic_repeat_off);
+                });
+                break;
+            case Repeat.ONE:
+                playerApi.setRepeat(Repeat.ONE).setResultCallback(empty -> {
+//                    Toast.makeText(this, "Repeat one", Toast.LENGTH_SHORT).show();
+                    binding.repeat.setImageResource(R.drawable.ic_repeat_one);
+                });
+                break;
+            case Repeat.ALL:
+                playerApi.setRepeat(Repeat.ALL).setResultCallback(empty -> {
+//                    Toast.makeText(this, "Repeat all", Toast.LENGTH_SHORT).show();
+                    binding.repeat.setImageResource(R.drawable.ic_repeat);
+                });
+                break;
+            default:
+        }
     }
 
     private void searchTrack(CharSequence charSequence) {
@@ -386,10 +391,10 @@ public class RoomActivity extends AppCompatActivity {
                                                 }
                                             });
                                             if (!playerState.isPaused)
-                                                handler.postDelayed(this, 500);
+                                                handler.postDelayed(this, 300);
                                         }
                                     };
-                                    handler.postDelayed(r, 1000);
+                                    handler.postDelayed(r, 300);
 
 
 //                                    if (!justJoined) {
@@ -447,7 +452,8 @@ public class RoomActivity extends AppCompatActivity {
                                                     Timestamp lastUpdateTime = mRoom.getUpdateTime();
 
                                                     Log.d(TAG, "onEvent: current time : " + currentTime.toString());
-                                                    Log.d(TAG, "onEvent: last update time : " + lastUpdateTime.toString());
+//                                                    Log.d(TAG, "onEvent: last update time : " + lastUpdateTime.toString());
+                                                    setRepeat(mRoom.getRepeat());
 
 //                                                    TODO subtract seconds and add to difference with nanoseconds!
                                                     long diff = currentTime.compareTo(lastUpdateTime);
@@ -458,12 +464,16 @@ public class RoomActivity extends AppCompatActivity {
                                                     Log.d(TAG, "onEvent: nanoseconds difference : " + nanoSecondsDiff);
                                                     Log.d(TAG, "onEvent: nanoseconds difference converted : " + nanoSecondsDiff / 1000000);
                                                     Log.d(TAG, "onEvent: diff : " + diff);
-                                                    playerApi.setRepeat(mRoom.getRepeat());
 
-                                                    int progress = (int) ((double) (mRoom.getCurrentPosition() + secondsDiff + (nanoSecondsDiff / 1000000)) / (double) duration * 100);
+                                                    Log.d(TAG, "onEvent: Difference : " + (secondsDiff + (nanoSecondsDiff / 1000000)));
+                                                    int progress;
+                                                    if (mRoom.isPlaying())
+                                                        progress = (int) ((double) (mRoom.getCurrentPosition() + secondsDiff + (nanoSecondsDiff / 1000000)) / (double) duration * 100);
+                                                    else
+                                                        progress = (int) (((double) mRoom.getCurrentPosition()) / (double) duration * 100);
                                                     Log.d(TAG, "onEvent: progress : " + progress);
                                                     binding.seekbar.setProgress(progress);
-                                                    playerApi.seekTo(mRoom.getCurrentPosition() + secondsDiff + (nanoSecondsDiff / 1000000)).setResultCallback(new CallResult.ResultCallback<Empty>() {
+                                                    playerApi.seekTo(mRoom.getCurrentPosition() + ((Timestamp.now().getSeconds() - lastUpdateTime.getSeconds()) * 1000) + ((Timestamp.now().getNanoseconds() - lastUpdateTime.getNanoseconds()) / 1000000)).setResultCallback(new CallResult.ResultCallback<Empty>() {
                                                         @Override
                                                         public void onResult(Empty empty) {
                                                             if (!mRoom.getLastUpdateBy().equals(currentUser)) {
