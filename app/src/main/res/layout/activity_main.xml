@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#404040"
     android:gravity="center"
     android:orientation="vertical"
     tools:context=".MainActivity">
@@ -12,6 +13,7 @@
         android:id="@+id/roomId"
         android:layout_width="150dp"
         android:layout_height="wrap_content"
+        android:textColor="@color/white"
         android:hint="Room Id"
         android:text="oykkxnu" />
 
@@ -20,6 +22,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
+        android:background="@drawable/button"
+        android:textStyle="bold"
+        android:textColor="@color/white"
         android:text="JOIN ROOM" />
 
     <Button
@@ -27,6 +32,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
+        android:background="@drawable/button"
+        android:textStyle="bold"
+        android:textColor="@color/white"
+        android:bottomRightRadius="8dp"
+        android:bottomLeftRadius="6dp"
+        android:topLeftRadius="4dp"
+        android:topRightRadius="10dp"
         android:text="CREATE ROOM" />
 
     <Button
@@ -34,6 +46,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
+        android:background="@drawable/button"
+        android:textStyle="bold"
+        android:textColor="#ff0000"
         android:text="LOG OUT" />
 
 
