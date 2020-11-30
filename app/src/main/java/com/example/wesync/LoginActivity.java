@@ -57,6 +57,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getSupportActionBar().hide();
         binding = ActivityLoginBinding.inflate(getLayoutInflater());
         View view = binding.getRoot();
         setContentView(view);
@@ -71,7 +72,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
         progressDialog = new ProgressDialog(this);
         binding.signIn.setOnClickListener(this);
-        binding.signUp.setOnClickListener(this);
+        //binding.signUp.setOnClickListener(this);
     }
 
     //method for user login
@@ -113,7 +114,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     @Override
     public void onClick(View view) {
         if (binding.signUp.equals(view)) {
-            startActivity(new Intent(this, SignUpActivity.class));
+            startActivity(new Intent(LoginActivity.this, SignUpActivity.class));
             finish();
         } else if (binding.signIn.equals(view)) {
             userLogin();

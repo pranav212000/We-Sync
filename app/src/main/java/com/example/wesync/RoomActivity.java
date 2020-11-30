@@ -96,6 +96,7 @@ public class RoomActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getSupportActionBar().hide();
 
         binding = ActivityRoomBinding.inflate(getLayoutInflater());
         View root = binding.getRoot();

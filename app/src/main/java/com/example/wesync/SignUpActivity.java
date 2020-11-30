@@ -15,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.wesync.databinding.ActivitySignUpBinding;
+import com.example.wesync.databinding.ActivitySignUpBinding;
 import com.example.wesync.models.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -65,6 +66,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
+        getSupportActionBar().hide();
         binding = ActivitySignUpBinding.inflate(getLayoutInflater());
         View view = binding.getRoot();
         setContentView(view);
@@ -175,7 +177,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
         if (binding.signUp.equals(view)) {
             registerUser();
         } else if (binding.signIn.equals(view)) {
-            startActivity(new Intent(this, LoginActivity.class));
+            startActivity(new Intent(SignUpActivity.this, LoginActivity.class));
         }
     }
 
