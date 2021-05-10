@@ -3,8 +3,10 @@ package com.example.wesync;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.StrictMode;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -23,7 +25,6 @@ import com.example.wesync.adapters.TracksAdapter;
 import com.example.wesync.databinding.ActivityRoomBinding;
 import com.example.wesync.models.Room;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -51,6 +52,7 @@ import java.util.List;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
+import kaaes.spotify.webapi.android.models.PlaylistsPager;
 import kaaes.spotify.webapi.android.models.Track;
 import kaaes.spotify.webapi.android.models.TracksPager;
 import retrofit.Callback;
@@ -127,18 +129,47 @@ public class RoomActivity extends AppCompatActivity {
             }
         };
 
-        binding.sync.setOnClickListener(view -> updateDb());
+        binding.share.setOnClickListener(view -> {
+            PackageManager pm = RoomActivity.this.getPackageManager();
+//                try {
+//                    Intent waIntent = new Intent(Intent.ACTION_SEND);
+//                    waIntent.setType("text/plain");
+//                    String text = "YOUR TEXT HERE";
+//                    PackageInfo info = pm.getPackageInfo("com.whatsapp", PackageManager.GET_META_DATA);
+//                    waIntent.setPackage("com.whatsapp");
+//                    waIntent.putExtra(Intent.EXTRA_TEXT, text);
+//                    startActivity(Intent.createChooser(waIntent, "Share with"));
+
+            StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+            StrictMode.setVmPolicy(builder.build());
+
+            String text = "Join my room on We-Sync. \nRoom ID : " + mRoom.getRoomId();
+            Intent shareIntent;
+            shareIntent = new
+                    Intent(Intent.ACTION_SEND);
+            shareIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            shareIntent.putExtra(Intent.EXTRA_TEXT, text);
+            shareIntent.setType("text/*");
+            startActivity(Intent.createChooser(shareIntent, "Share with"));
+//                } catch (PackageManager.NameNotFoundException e) {
+//                    Toast.makeText(RoomActivity.this, "WhatsApp not Installed", Toast.LENGTH_SHORT).show();
+//                }
+
+        });
+
+        binding.sync.setOnClickListener(view -> updateDb(0));
+        binding.bottomSheetSync.setOnClickListener(view -> updateDb(0));
         binding.bottomSheetPlayPause.setOnClickListener(playPauseListener);
         binding.playPause.setOnClickListener(playPauseListener);
         binding.closeBottomSheet.setOnClickListener(view -> mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED));
-        binding.skipNext.setOnClickListener(view -> playerApi.skipNext().setResultCallback(empty -> updateDb()));
+        binding.skipNext.setOnClickListener(view -> playerApi.skipNext().setResultCallback(empty -> updateDb(0)));
 
-        binding.skipPrevious.setOnClickListener(view -> playerApi.skipPrevious().setResultCallback(empty -> updateDb()));
+        binding.skipPrevious.setOnClickListener(view -> playerApi.skipPrevious().setResultCallback(empty -> updateDb(0)));
 
         binding.repeat.setOnClickListener(view -> {
             mRoom.setRepeat((mRoom.getRepeat() + 1) % 3);
             setRepeat(mRoom.getRepeat());
-            updateDb();
+            updateDb(0);
 
         });
 
@@ -157,7 +188,7 @@ public class RoomActivity extends AppCompatActivity {
                         playerApi.seekTo(currentPosition).setResultCallback(new CallResult.ResultCallback<Empty>() {
                             @Override
                             public void onResult(Empty empty) {
-                                updateDb();
+                                updateDb(0);
                             }
                         });
                         binding.start.setText(Constants.getTimeFormLong(currentPosition));
@@ -260,6 +291,27 @@ public class RoomActivity extends AppCompatActivity {
         final SpotifyService spotify = api.getService();
 
 
+//        spotify.searchPlaylists(charSequence.toString(), new Callback<PlaylistsPager>() {
+//            @Override
+//            public void success(PlaylistsPager playlistsPager, Response response) {
+////                Log.d(TAG, "success: Playlists" + playlistsPager.playlists.items.toString());
+////                TOdo remove this is required!
+//                Log.d(TAG, "success: href : " + playlistsPager.playlists.items.get(0).external_urls.get("spotify"));
+//                playerApi.play(playlistsPager.playlists.items.get(0).external_urls.get("spotify")).setResultCallback(new CallResult.ResultCallback<Empty>() {
+//                    @Override
+//                    public void onResult(Empty empty) {
+//                        Toast.makeText(RoomActivity.this, "Playing", Toast.LENGTH_SHORT).show();
+//                    }
+//                });
+//                Toast.makeText(RoomActivity.this, "GOT PLAYLIST", Toast.LENGTH_SHORT).show();
+//            }
+//
+//            @Override
+//            public void failure(RetrofitError error) {
+//                Log.d(TAG, "failure: Playlist" + error.getMessage());
+//            }
+//        });
+
         spotify.searchTracks(charSequence.toString(), new Callback<TracksPager>() {
             @Override
             public void success(TracksPager tracksPager, Response response) {
@@ -288,6 +340,7 @@ public class RoomActivity extends AppCompatActivity {
                 Toast.makeText(RoomActivity.this, mTrackArrayList.get(position).name, Toast.LENGTH_SHORT).show();
                 final Track track = mTrackArrayList.get(position);
 
+
                 playerApi.play(track.uri).setResultCallback(new CallResult.ResultCallback<Empty>() {
                     @Override
                     public void onResult(Empty empty) {
@@ -297,7 +350,7 @@ public class RoomActivity extends AppCompatActivity {
                         binding.trackTextView.setText(track.name);
                         hideKeyboard(RoomActivity.this);
                         mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                        updateDb();
+                        updateDb(0);
                     }
                 }).setErrorCallback(new ErrorCallback() {
                     @Override
@@ -458,23 +511,27 @@ public class RoomActivity extends AppCompatActivity {
 
 //                                                    TODO subtract seconds and add to difference with nanoseconds!
                                                     long diff = currentTime.compareTo(lastUpdateTime);
-                                                    long nanoSecondsDiff = currentTime.getNanoseconds() - lastUpdateTime.getNanoseconds();
+                                                    long nanoSecondsDiff = (currentTime.getNanoseconds() - lastUpdateTime.getNanoseconds()) / 1000000;
                                                     long secondsDiff = (currentTime.getSeconds() - lastUpdateTime.getSeconds()) * 1000;
 
+                                                    if (secondsDiff < 2)
+                                                        secondsDiff = 0;
                                                     Log.d(TAG, "onEvent: diff : " + diff);
                                                     Log.d(TAG, "onEvent: nanoseconds difference : " + nanoSecondsDiff);
-                                                    Log.d(TAG, "onEvent: nanoseconds difference converted : " + nanoSecondsDiff / 1000000);
+                                                    Log.d(TAG, "onEvent: nanoseconds difference converted : " + nanoSecondsDiff);
                                                     Log.d(TAG, "onEvent: diff : " + diff);
 
-                                                    Log.d(TAG, "onEvent: Difference : " + (secondsDiff + (nanoSecondsDiff / 1000000)));
+                                                    Log.d(TAG, "onEvent: Difference : " + (secondsDiff + (nanoSecondsDiff)));
                                                     int progress;
                                                     if (mRoom.isPlaying())
-                                                        progress = (int) ((double) (mRoom.getCurrentPosition() + secondsDiff + (nanoSecondsDiff / 1000000)) / (double) duration * 100);
+//                                                        progress = (int) ((double) (mRoom.getCurrentPosition() + secondsDiff + (nanoSecondsDiff)) / (double) duration * 100);
+                                                        progress = (int) ((double) ((mRoom.getCurrentPosition() + secondsDiff + nanoSecondsDiff) / (double) duration * 100));
                                                     else
-                                                        progress = (int) (((double) mRoom.getCurrentPosition()) / (double) duration * 100);
+                                                        progress = (int) (((double) mRoom.getCurrentPosition() + secondsDiff + nanoSecondsDiff) / (double) duration * 100);
                                                     Log.d(TAG, "onEvent: progress : " + progress);
                                                     binding.seekbar.setProgress(progress);
-                                                    playerApi.seekTo(mRoom.getCurrentPosition() + ((Timestamp.now().getSeconds() - lastUpdateTime.getSeconds()) * 1000) + ((Timestamp.now().getNanoseconds() - lastUpdateTime.getNanoseconds()) / 1000000)).setResultCallback(new CallResult.ResultCallback<Empty>() {
+//                                                    playerApi.seekTo(mRoom.getCurrentPosition() + ((Timestamp.now().getSeconds() - lastUpdateTime.getSeconds()) * 1000) + ((Timestamp.now().getNanoseconds() - lastUpdateTime.getNanoseconds()) / 1000000)).setResultCallback(new CallResult.ResultCallback<Empty>() {
+                                                    playerApi.seekTo(mRoom.getCurrentPosition() + secondsDiff + nanoSecondsDiff).setResultCallback(new CallResult.ResultCallback<Empty>() {
                                                         @Override
                                                         public void onResult(Empty empty) {
                                                             if (!mRoom.getLastUpdateBy().equals(currentUser)) {
@@ -516,7 +573,7 @@ public class RoomActivity extends AppCompatActivity {
         binding.bottomSheetPlayPause.setImageResource(R.drawable.ic_pause);
         binding.playPause.setImageResource(R.drawable.ic_pause_white);
         if (isFromUser)
-            updateDb();
+            updateDb(0);
     }
 
     private void pause(boolean isFromUser) {
@@ -524,42 +581,43 @@ public class RoomActivity extends AppCompatActivity {
         binding.bottomSheetPlayPause.setImageResource(R.drawable.ic_play);
         binding.playPause.setImageResource(R.drawable.ic_play_white);
         if (isFromUser)
-            updateDb();
+            updateDb(0);
     }
 
-    private void updateDb() {
+    private void updateDb(int i) {
         if (!justJoined) {
 
-//            for (int i = 0; i < 5; i++) {
-            mRoom.setTrackUri(currentTrackUri);
-            mRoom.setReSync(true);
-            mRoom.setLastUpdateBy(currentUser);
-            playerApi.getPlayerState().setResultCallback(playerState -> mRoom.setCurrentPosition(playerState.playbackPosition));
-            mRoom.setUpdateTime(Timestamp.now());
+            if (i == 0 || mRoom.getLastUpdateBy().equals(currentUser)) {
 
-//            Map<String, Object> body = new HashMap<>();
-//            body.put(Constants.ROOM, mRoom);
-//            body.put(Constants.UPDATE_TIME, FieldValue.serverTimestamp());
-            db.collection(Constants.ROOMS_COLLECTION).document(mRoom.getRoomId()).set(mRoom).addOnSuccessListener(new OnSuccessListener<Void>() {
-                @Override
-                public void onSuccess(Void aVoid) {
-                    Log.d(TAG, "onSuccess: DB updated");
-                    Toast.makeText(RoomActivity.this, "DB UPDATED", Toast.LENGTH_SHORT).show();
-                }
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    Toast.makeText(RoomActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
-                    Log.e(TAG, "onFailure: couldn't update db" + e.getMessage());
-                }
-            }).addOnCompleteListener(new OnCompleteListener<Void>() {
-                @Override
-                public void onComplete(@NonNull Task<Void> task) {
-//                        i[0]++;
-                }
-            });
-//            }
+                playerApi.getPlayerState().setResultCallback(playerState -> {
+                    mRoom.setTrackUri(currentTrackUri);
+                    mRoom.setReSync(true);
+                    mRoom.setLastUpdateBy(currentUser);
+                    mRoom.setCurrentPosition(playerState.playbackPosition);
+                    mRoom.setUpdateTime(Timestamp.now());
 
+                    db.collection(Constants.ROOMS_COLLECTION).document(mRoom.getRoomId()).set(mRoom).addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void aVoid) {
+                            Log.d(TAG, "onSuccess: DB updated");
+                            if (i == 0)
+                                Toast.makeText(RoomActivity.this, "DB UPDATED", Toast.LENGTH_SHORT).show();
+                        }
+                    }).addOnFailureListener(e -> {
+                        Toast.makeText(RoomActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                        Log.e(TAG, "onFailure: couldn't update db" + e.getMessage());
+                    }).addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            if (i < 5 && mRoom.isPlaying()) {
+                                new Handler().postDelayed(() -> updateDb(i + 1), 300);
+                            }
+                        }
+                    });
+                });
+
+
+            }
         } else justJoined = false;
     }
 }
