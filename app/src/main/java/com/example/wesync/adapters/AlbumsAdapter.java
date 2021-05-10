@@ -13,23 +13,22 @@ import com.example.wesync.R;
 
 import java.util.ArrayList;
 
-import kaaes.spotify.webapi.android.models.ArtistSimple;
-import kaaes.spotify.webapi.android.models.Track;
+import kaaes.spotify.webapi.android.models.AlbumSimple;
 
-public class TracksAdapter extends BaseAdapter {
+public class AlbumsAdapter extends BaseAdapter {
 
-    private final ArrayList<Track> mTrackArrayList;
+    private final ArrayList<AlbumSimple> mAlbumArrayList;
     private Context mContext;
 
-    public TracksAdapter(Context context, ArrayList<Track> trackArrayList) {
+    public AlbumsAdapter(Context context, ArrayList<AlbumSimple> albumArrayList) {
         mContext = context;
-        mTrackArrayList = trackArrayList;
+        mAlbumArrayList = albumArrayList;
     }
 
 
     @Override
     public int getCount() {
-        return mTrackArrayList.size();
+        return mAlbumArrayList.size();
     }
 
     @Override
@@ -56,23 +55,21 @@ public class TracksAdapter extends BaseAdapter {
             TextView title = (TextView) grid.findViewById(R.id.title);
 //            TextView subTitle = (TextView) grid.findViewById(R.id.subtitle);
             ImageView imageView = (ImageView) grid.findViewById(R.id.track_image);
-            title.setText(mTrackArrayList.get(position).name);
+            title.setText(mAlbumArrayList.get(position).name);
             title.setSelected(true);
 
-            if (mTrackArrayList.get(position).album.images.size() != 0) {
+            if (mAlbumArrayList.get(position).images.size() != 0) {
                 Glide.with(mContext)
-                        .load(mTrackArrayList.get(position).album.images.get(0).url)
+                        .load(mAlbumArrayList.get(position).images.get(0).url)
                         .placeholder(R.mipmap.ic_launcher)
                         .into(imageView);
+
             } else {
                 imageView.setImageResource(R.drawable.ic_track);
             }
 
             String artists = "";
-            for (ArtistSimple artist : mTrackArrayList.get(position).artists) {
-                artists = artists + ", " + artist.name;
 
-            }
 //            subTitle.setText((mTrackArrayList.get(position).album.name));
 
 

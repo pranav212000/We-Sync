@@ -21,6 +21,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.wesync.adapters.AlbumsAdapter;
+import com.example.wesync.adapters.PlaylistsAdapter;
 import com.example.wesync.adapters.TracksAdapter;
 import com.example.wesync.databinding.ActivityRoomBinding;
 import com.example.wesync.models.Room;
@@ -52,6 +54,10 @@ import java.util.List;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
+import kaaes.spotify.webapi.android.models.Album;
+import kaaes.spotify.webapi.android.models.AlbumSimple;
+import kaaes.spotify.webapi.android.models.AlbumsPager;
+import kaaes.spotify.webapi.android.models.PlaylistSimple;
 import kaaes.spotify.webapi.android.models.PlaylistsPager;
 import kaaes.spotify.webapi.android.models.Track;
 import kaaes.spotify.webapi.android.models.TracksPager;
@@ -70,6 +76,8 @@ public class RoomActivity extends AppCompatActivity {
     private GridView mGridView;
     private String mAccessToken;
     private ArrayList<Track> mTrackArrayList = new ArrayList<>();
+    private ArrayList<PlaylistSimple> mPlaylistArrayList = new ArrayList<>();
+    private ArrayList<AlbumSimple> mAlbumArrayList = new ArrayList<>();
     private SpotifyAppRemote mSpotifyAppRemote;
     private PlayerApi playerApi;
     //    private boolean isPlaying = false;
@@ -80,7 +88,8 @@ public class RoomActivity extends AppCompatActivity {
     private String currentUser;
     //    private long currentPosition;
     private boolean otherUserUpdateDone = false;
-
+    private int currentSearch = Constants.TRACK_SEARCH;
+    private String searchText = "";
     private BottomSheetBehavior mBottomSheetBehavior;
     private boolean justJoined = true;
 
@@ -128,6 +137,11 @@ public class RoomActivity extends AppCompatActivity {
 
             }
         };
+
+        binding.tracksCard.setOnClickListener(v -> setSearch(Constants.TRACK_SEARCH));
+        binding.albumsCard.setOnClickListener(v -> setSearch(Constants.ALBUM_SEARCH));
+        binding.playlistsCard.setOnClickListener(v -> setSearch(Constants.PLAYLIST_SEARCH));
+
 
         binding.share.setOnClickListener(view -> {
             PackageManager pm = RoomActivity.this.getPackageManager();
@@ -237,8 +251,11 @@ public class RoomActivity extends AppCompatActivity {
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 
-                if (!mAccessToken.isEmpty() && !charSequence.toString().isEmpty())
-                    searchTrack(charSequence);
+                if (!mAccessToken.isEmpty() && !charSequence.toString().isEmpty()) {
+                    searchText = charSequence.toString();
+                    searchTrack();
+                }
+
 
             }
 
@@ -249,6 +266,25 @@ public class RoomActivity extends AppCompatActivity {
         });
 
 
+    }
+
+    private void setSearch(int trackSearch) {
+        currentSearch = trackSearch;
+        binding.tracksCard.setCardBackgroundColor(getColor(R.color.gray));
+        binding.albumsCard.setCardBackgroundColor(getColor(R.color.gray));
+        binding.playlistsCard.setCardBackgroundColor(getColor(R.color.gray));
+        switch (trackSearch) {
+            case Constants.TRACK_SEARCH:
+                binding.tracksCard.setCardBackgroundColor(getColor(R.color.colorPrimary));
+                break;
+            case Constants.ALBUM_SEARCH:
+                binding.albumsCard.setCardBackgroundColor(getColor(R.color.colorPrimary));
+                break;
+            case Constants.PLAYLIST_SEARCH:
+                binding.playlistsCard.setCardBackgroundColor(getColor(R.color.colorPrimary));
+                break;
+        }
+        searchTrack();
     }
 
     @Override
@@ -283,12 +319,63 @@ public class RoomActivity extends AppCompatActivity {
         }
     }
 
-    private void searchTrack(CharSequence charSequence) {
+    private void searchTrack() {
         final SpotifyApi api = new SpotifyApi();
         api.setAccessToken(mAccessToken);
 
         Log.d(TAG, "onTextChanged: token : " + mAccessToken);
         final SpotifyService spotify = api.getService();
+
+        if (currentSearch == Constants.TRACK_SEARCH) {
+            spotify.searchTracks(searchText, new Callback<TracksPager>() {
+                @Override
+                public void success(TracksPager tracksPager, Response response) {
+                    mTrackArrayList.clear();
+                    mTrackArrayList.addAll(tracksPager.tracks.items);
+                    if (mTrackArrayList.size() != 0) {
+                        setGridView();
+                    }
+                }
+
+                @Override
+                public void failure(RetrofitError error) {
+                    Log.e(TAG, "failure: error", error);
+                }
+            });
+        } else if (currentSearch == Constants.PLAYLIST_SEARCH) {
+            spotify.searchPlaylists(searchText, new Callback<PlaylistsPager>() {
+                @Override
+                public void success(PlaylistsPager playlistsPager, Response response) {
+                    mPlaylistArrayList.clear();
+                    mPlaylistArrayList.addAll(playlistsPager.playlists.items);
+                    Log.d(TAG, "success: name : " + mPlaylistArrayList.get(0).name);
+                    if (mAlbumArrayList.size() != 0) {
+                        setGridView();
+                    }
+                }
+
+                @Override
+                public void failure(RetrofitError error) {
+
+                }
+            });
+        } else {
+            spotify.searchAlbums(searchText, new Callback<AlbumsPager>() {
+                @Override
+                public void success(AlbumsPager albumsPager, Response response) {
+                    mAlbumArrayList.clear();
+                    mAlbumArrayList.addAll(albumsPager.albums.items);
+                    if (mAlbumArrayList.size() != 0) {
+                        setGridView();
+                    }
+                }
+
+                @Override
+                public void failure(RetrofitError error) {
+
+                }
+            });
+        }
 
 
 //        spotify.searchPlaylists(charSequence.toString(), new Callback<PlaylistsPager>() {
@@ -312,54 +399,104 @@ public class RoomActivity extends AppCompatActivity {
 //            }
 //        });
 
-        spotify.searchTracks(charSequence.toString(), new Callback<TracksPager>() {
-            @Override
-            public void success(TracksPager tracksPager, Response response) {
 
-                mTrackArrayList.clear();
-                mTrackArrayList.addAll(tracksPager.tracks.items);
-
-                if (mTrackArrayList.size() != 0) {
-                    setGridView();
-                }
-            }
-
-            @Override
-            public void failure(RetrofitError error) {
-                Log.e(TAG, "failure: error", error);
-            }
-        });
     }
 
     private void setGridView() {
-        TracksAdapter adapter = new TracksAdapter(RoomActivity.this, mTrackArrayList);
-        binding.tracksGrid.setAdapter(adapter);
-        binding.tracksGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                Toast.makeText(RoomActivity.this, mTrackArrayList.get(position).name, Toast.LENGTH_SHORT).show();
-                final Track track = mTrackArrayList.get(position);
+        if (currentSearch == Constants.TRACK_SEARCH) {
+            TracksAdapter adapter = new TracksAdapter(RoomActivity.this, mTrackArrayList);
+            binding.tracksGrid.setAdapter(adapter);
+            binding.tracksGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                    Toast.makeText(RoomActivity.this, mTrackArrayList.get(position).name, Toast.LENGTH_SHORT).show();
+                    final Track track = mTrackArrayList.get(position);
 
 
-                playerApi.play(track.uri).setResultCallback(new CallResult.ResultCallback<Empty>() {
-                    @Override
-                    public void onResult(Empty empty) {
-                        Log.d(TAG, "onResult: Playing");
-                        mRoom.setPlaying(true);
-                        currentTrackUri = track.uri;
-                        binding.trackTextView.setText(track.name);
-                        hideKeyboard(RoomActivity.this);
-                        mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                        updateDb(0);
-                    }
-                }).setErrorCallback(new ErrorCallback() {
-                    @Override
-                    public void onError(Throwable throwable) {
+                    playerApi.play(track.uri).setResultCallback(new CallResult.ResultCallback<Empty>() {
+                        @Override
+                        public void onResult(Empty empty) {
+                            Log.d(TAG, "onResult: Playing");
+                            mRoom.setPlaying(true);
+                            currentTrackUri = track.uri;
+                            binding.trackTextView.setText(track.name);
+                            hideKeyboard(RoomActivity.this);
+                            mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                            updateDb(0);
+                        }
+                    }).setErrorCallback(new ErrorCallback() {
+                        @Override
+                        public void onError(Throwable throwable) {
+                            Toast.makeText(RoomActivity.this, throwable.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            });
+        } else if (currentSearch == Constants.PLAYLIST_SEARCH) {
+            PlaylistsAdapter adapter = new PlaylistsAdapter(RoomActivity.this, mPlaylistArrayList);
+            binding.tracksGrid.setAdapter(adapter);
 
-                    }
-                });
-            }
-        });
+            binding.tracksGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                    Toast.makeText(RoomActivity.this, mPlaylistArrayList.get(position).name, Toast.LENGTH_SHORT).show();
+                    final PlaylistSimple playlistSimple = mPlaylistArrayList.get(position);
+
+
+                    playerApi.play(playlistSimple.uri).setResultCallback(new CallResult.ResultCallback<Empty>() {
+                        @Override
+                        public void onResult(Empty empty) {
+                            Log.d(TAG, "onResult: Playing");
+                            mRoom.setPlaying(true);
+                            currentTrackUri = playlistSimple.uri;
+                            binding.trackTextView.setText(playlistSimple.name);
+                            hideKeyboard(RoomActivity.this);
+                            mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                            updateDb(0);
+                        }
+                    }).setErrorCallback(new ErrorCallback() {
+                        @Override
+                        public void onError(Throwable throwable) {
+                            Toast.makeText(RoomActivity.this, throwable.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            });
+
+
+        } else {
+            AlbumsAdapter adapter = new AlbumsAdapter(RoomActivity.this, mAlbumArrayList);
+            binding.tracksGrid.setAdapter(adapter);
+
+
+            binding.tracksGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                    Toast.makeText(RoomActivity.this, mAlbumArrayList.get(position).name, Toast.LENGTH_SHORT).show();
+                    final AlbumSimple albumSimple = mAlbumArrayList.get(position);
+
+
+                    playerApi.play(albumSimple.uri).setResultCallback(new CallResult.ResultCallback<Empty>() {
+                        @Override
+                        public void onResult(Empty empty) {
+                            Log.d(TAG, "onResult: Playing");
+                            mRoom.setPlaying(true);
+                            currentTrackUri = albumSimple.uri;
+                            binding.trackTextView.setText(albumSimple.name);
+                            hideKeyboard(RoomActivity.this);
+                            mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                            updateDb(0);
+                        }
+                    }).setErrorCallback(new ErrorCallback() {
+                        @Override
+                        public void onError(Throwable throwable) {
+                            Toast.makeText(RoomActivity.this, throwable.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            });
+
+        }
     }
 
     @Override

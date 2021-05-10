@@ -28,6 +28,9 @@ public class Constants {
     public static final String REFRESH_TIME = "refresh_time";
     public static final String TOKEN_TYPE = "Bearer";
     public static final String UPDATE_TIME = "updateTime";
+    public static final int TRACK_SEARCH = 1;
+    public static final int ALBUM_SEARCH = 3;
+    public static final int PLAYLIST_SEARCH = 2;
 
     public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 

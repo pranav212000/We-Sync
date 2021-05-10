@@ -61,72 +61,75 @@
 
         </androidx.cardview.widget.CardView>
 
-<!--        <LinearLayout-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:layout_marginHorizontal="20dp"-->
-<!--            android:layout_marginBottom="20dp"-->
-<!--            android:orientation="horizontal"-->
-<!--            android:weightSum="3">-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginBottom="20dp"
+            android:orientation="horizontal"
+            android:weightSum="3">
 
-<!--            <com.google.android.material.card.MaterialCardView-->
-<!--                android:layout_width="0dp"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_marginHorizontal="10dp"-->
-<!--                android:layout_weight="1"-->
-<!--                android:backgroundTint="@color/colorPrimary"-->
-<!--                app:cardCornerRadius="15dp"-->
-<!--                app:strokeColor="@color/colorAccent"-->
-<!--                app:strokeWidth="1dp">-->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/tracks_card"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="10dp"
+                android:layout_weight="1"
+                app:cardBackgroundColor="@color/colorPrimary"
+                app:cardCornerRadius="15dp">
 
-<!--                <TextView-->
-<!--                    android:layout_width="match_parent"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:gravity="center"-->
-<!--                    android:padding="10dp"-->
-<!--                    android:text="Tracks"-->
-<!--                    android:textColor="@color/white" />-->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:padding="10dp"
+                    android:text="Tracks"
+                    android:textColor="@color/white" />
 
-<!--            </com.google.android.material.card.MaterialCardView>-->
+            </com.google.android.material.card.MaterialCardView>
 
-<!--            <com.google.android.material.card.MaterialCardView-->
-<!--                android:layout_width="0dp"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_marginHorizontal="10dp"-->
-<!--                android:layout_weight="1"-->
-<!--                android:backgroundTint="@color/gray"-->
-<!--                app:cardCornerRadius="15dp">-->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/playlists_card"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="10dp"
+                android:layout_weight="1"
+                app:cardBackgroundColor="@color/gray"
 
-<!--                <TextView-->
-<!--                    android:layout_width="match_parent"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:gravity="center"-->
-<!--                    android:padding="10dp"-->
-<!--                    android:text="Playlists"-->
-<!--                    android:textColor="@color/white" />-->
+                app:cardCornerRadius="15dp">
 
-<!--            </com.google.android.material.card.MaterialCardView>-->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:padding="10dp"
+                    android:text="Playlists"
+                    android:textColor="@color/white" />
 
-<!--            <com.google.android.material.card.MaterialCardView-->
-<!--                android:layout_width="0dp"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_marginHorizontal="10dp"-->
-<!--                android:layout_weight="1"-->
-<!--                android:backgroundTint="@color/gray"-->
-<!--                app:cardCornerRadius="15dp">-->
+            </com.google.android.material.card.MaterialCardView>
 
-<!--                <TextView-->
-<!--                    android:layout_width="match_parent"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:gravity="center"-->
-<!--                    android:padding="10dp"-->
-<!--                    android:text="Albums"-->
-<!--                    android:textColor="@color/white" />-->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/albums_card"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="10dp"
+                android:layout_weight="1"
+                app:cardBackgroundColor="@color/gray"
+                app:cardCornerRadius="15dp">
 
-<!--            </com.google.android.material.card.MaterialCardView>-->
+                <TextView
+
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:padding="10dp"
+                    android:text="Albums"
+                    android:textColor="@color/white" />
+
+            </com.google.android.material.card.MaterialCardView>
 
 
-<!--        </LinearLayout>-->
+        </LinearLayout>
 
         <GridView
             android:id="@+id/tracks_grid"
@@ -227,11 +230,11 @@
                         android:text="Now Playing"
                         android:textColor="@color/white" />
 
-                    <ImageView
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:src="@drawable/ic_menu_vertical" />
+<!--                    <ImageView-->
+<!--                        android:layout_width="0dp"-->
+<!--                        android:layout_height="match_parent"-->
+<!--                        android:layout_weight="1"-->
+<!--                        android:src="@drawable/ic_menu_vertical" />-->
 
                 </LinearLayout>
 
