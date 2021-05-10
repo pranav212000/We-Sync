@@ -23,7 +23,7 @@
         android:background="@drawable/button"
         android:paddingHorizontal="10dp"
         android:text="JOIN ROOM"
-        android:textColor="@color/black" />
+        android:textColor="@color/colorAccent" />
 
     <Button
         android:id="@+id/createRoom"
@@ -35,7 +35,7 @@
         android:bottomRightRadius="8dp"
         android:paddingHorizontal="10dp"
         android:text="CREATE ROOM"
-        android:textColor="@color/black"
+        android:textColor="@color/colorAccent"
         android:topLeftRadius="4dp"
         android:topRightRadius="10dp" />
 

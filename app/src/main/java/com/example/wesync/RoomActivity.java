@@ -49,12 +49,14 @@ import com.spotify.protocol.types.Empty;
 import com.spotify.protocol.types.PlayerState;
 import com.spotify.protocol.types.Repeat;
 
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
-import kaaes.spotify.webapi.android.models.Album;
 import kaaes.spotify.webapi.android.models.AlbumSimple;
 import kaaes.spotify.webapi.android.models.AlbumsPager;
 import kaaes.spotify.webapi.android.models.PlaylistSimple;
@@ -637,44 +639,59 @@ public class RoomActivity extends AppCompatActivity {
                                                             playerApi.play(mRoom.getTrackUri());
                                                     else
                                                         playerApi.pause();
-//                                                TODO add the difference between the current time and updated time to current position to them in sync!
-                                                    Timestamp currentTime = Timestamp.now();
 
-                                                    Timestamp lastUpdateTime = mRoom.getUpdateTime();
-
-                                                    Log.d(TAG, "onEvent: current time : " + currentTime.toString());
-//                                                    Log.d(TAG, "onEvent: last update time : " + lastUpdateTime.toString());
                                                     setRepeat(mRoom.getRepeat());
 
+
+//                                                TODO add the difference between the current time and updated time to current position to them in sync!
+                                                    Timestamp lastUpdateTime = mRoom.getUpdateTime();
+                                                    Timestamp currentTime = Timestamp.now();
+                                                    DateFormat df = DateFormat.getTimeInstance();
+                                                    df.setTimeZone(TimeZone.getTimeZone("utc"));
+
+                                                    Timestamp s = new Timestamp(new Date());
+                                                    Log.d(TAG, "onEvent: sendrecv utc : sec : " + s.getSeconds() + "nano : " + s.getNanoseconds());
+                                                    Log.d(TAG, "onEvent: current time : " + currentTime.toString());
+//                                                    Log.d(TAG, "onEvent: last update time : " + lastUpdateTime.toString());
+
+                                                    Log.d(TAG, "onEvent: sendrecv dbtime : sec : " + lastUpdateTime.getSeconds() + " nano : " + lastUpdateTime.getNanoseconds());
+//1 sec + 0.1 sec
+                                                    Log.d(TAG, "onEvent: sendrecv recvtime : sec : " + currentTime.getSeconds() + " nano : " + currentTime.getNanoseconds());
 //                                                    TODO subtract seconds and add to difference with nanoseconds!
                                                     long diff = currentTime.compareTo(lastUpdateTime);
-                                                    long nanoSecondsDiff = (currentTime.getNanoseconds() - lastUpdateTime.getNanoseconds()) / 1000000;
+                                                    long nanoSecondsDiff = Math.abs(currentTime.getNanoseconds() - lastUpdateTime.getNanoseconds()) / 1000000;
                                                     long secondsDiff = (currentTime.getSeconds() - lastUpdateTime.getSeconds()) * 1000;
 
-                                                    if (secondsDiff < 2)
-                                                        secondsDiff = 0;
-                                                    Log.d(TAG, "onEvent: diff : " + diff);
-                                                    Log.d(TAG, "onEvent: nanoseconds difference : " + nanoSecondsDiff);
-                                                    Log.d(TAG, "onEvent: nanoseconds difference converted : " + nanoSecondsDiff);
-                                                    Log.d(TAG, "onEvent: diff : " + diff);
+                                                    Log.d(TAG, "onEvent: sendrecv diffs in milli: sec : " + secondsDiff + " nano : " + nanoSecondsDiff);
+//                                                    if (diff == 0) {
+//                                                        nanoSecondsDiff = 0;
+//                                                        secondsDiff = 0;
+//                                                        Toast.makeText(RoomActivity.this, "SYNCED", Toast.LENGTH_SHORT).show();
+//                                                    }
 
-                                                    Log.d(TAG, "onEvent: Difference : " + (secondsDiff + (nanoSecondsDiff)));
+
+//                                                    Log.d(TAG, "onEvent: sendrecv db currpos : " + mRoom.getCurrentPosition());
+                                                    long time = (mRoom.getCurrentPosition() + secondsDiff + nanoSecondsDiff  + 200);
+                                                    Log.d(TAG, "onEvent: sendrecv updated");
+//                                                    Log.d(TAG, "onEvent: sendrecv time : " + time);
+                                                    Log.d(TAG, "onEvent: sendrecv posdiff : " + (time - mRoom.getCurrentPosition()));
                                                     int progress;
-                                                    if (mRoom.isPlaying())
-//                                                        progress = (int) ((double) (mRoom.getCurrentPosition() + secondsDiff + (nanoSecondsDiff)) / (double) duration * 100);
-                                                        progress = (int) ((double) ((mRoom.getCurrentPosition() + secondsDiff + nanoSecondsDiff) / (double) duration * 100));
-                                                    else
-                                                        progress = (int) (((double) mRoom.getCurrentPosition() + secondsDiff + nanoSecondsDiff) / (double) duration * 100);
+//                                                    if (mRoom.isPlaying())
+////                                                        progress = (int) ((double) (mRoom.getCurrentPosition() + secondsDiff + (nanoSecondsDiff)) / (double) duration * 100);
+                                                    progress = (int) ((double) time / (double) duration * 100);
+//                                                    else
+//                                                        progress = (int) (((double) mRoom.getCurrentPosition() + secondsDiff + nanoSecondsDiff - 1) / (double) duration * 100);
                                                     Log.d(TAG, "onEvent: progress : " + progress);
                                                     binding.seekbar.setProgress(progress);
 //                                                    playerApi.seekTo(mRoom.getCurrentPosition() + ((Timestamp.now().getSeconds() - lastUpdateTime.getSeconds()) * 1000) + ((Timestamp.now().getNanoseconds() - lastUpdateTime.getNanoseconds()) / 1000000)).setResultCallback(new CallResult.ResultCallback<Empty>() {
-                                                    playerApi.seekTo(mRoom.getCurrentPosition() + secondsDiff + nanoSecondsDiff).setResultCallback(new CallResult.ResultCallback<Empty>() {
-                                                        @Override
-                                                        public void onResult(Empty empty) {
-                                                            if (!mRoom.getLastUpdateBy().equals(currentUser)) {
-                                                                otherUserUpdateDone = true;
-                                                                justJoined = false;
-                                                            }
+                                                    Log.d(TAG, "onEvent: sendrecv before seek time sec : " + Timestamp.now().getSeconds() + " nano : " + Timestamp.now().getNanoseconds());
+
+                                                    playerApi.seekTo(time).setResultCallback(empty -> {
+
+                                                        Log.d(TAG, "onEvent: sendrecv after seek time sec : " + Timestamp.now().getSeconds() + " nano : " + Timestamp.now().getNanoseconds());
+                                                        if (!mRoom.getLastUpdateBy().equals(currentUser)) {
+                                                            otherUserUpdateDone = true;
+                                                            justJoined = false;
                                                         }
                                                     });
 
@@ -731,7 +748,9 @@ public class RoomActivity extends AppCompatActivity {
                     mRoom.setReSync(true);
                     mRoom.setLastUpdateBy(currentUser);
                     mRoom.setCurrentPosition(playerState.playbackPosition);
-                    mRoom.setUpdateTime(Timestamp.now());
+                    Timestamp now = Timestamp.now();
+                    mRoom.setUpdateTime(now);
+                    Log.d(TAG, "updateDb: sendrecv sendingtime sec: " + now.getSeconds() + "  nano : " + now.getNanoseconds());
 
                     db.collection(Constants.ROOMS_COLLECTION).document(mRoom.getRoomId()).set(mRoom).addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
@@ -746,8 +765,8 @@ public class RoomActivity extends AppCompatActivity {
                     }).addOnCompleteListener(new OnCompleteListener<Void>() {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
-                            if (i < 5 && mRoom.isPlaying()) {
-                                new Handler().postDelayed(() -> updateDb(i + 1), 300);
+                            if (i < 4 && mRoom.isPlaying()) {
+                                new Handler().postDelayed(() -> updateDb(i + 1), 200);
                             }
                         }
                     });
