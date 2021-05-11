@@ -590,17 +590,6 @@ public class RoomActivity extends AppCompatActivity {
                                     handler.postDelayed(r, 300);
 
 
-//                                    if (!justJoined) {
-//                                        if (otherUserUpdateDone) {
-//                                            updateDb();
-//                                            Log.d(TAG, "onEvent: Current user update");
-//                                        } else {
-//                                            otherUserUpdateDone = true;
-//                                            Log.d(TAG, "onEvent: other user update done");
-//                                        }
-//                                    } else {
-//                                        Log.d(TAG, "onEvent: just joined!");
-//                                    }
 
                                 }
                             }
@@ -757,7 +746,7 @@ public class RoomActivity extends AppCompatActivity {
                         public void onSuccess(Void aVoid) {
                             Log.d(TAG, "onSuccess: DB updated");
                             if (i == 0)
-                                Toast.makeText(RoomActivity.this, "DB UPDATED", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(RoomActivity.this, "SYNCED!", Toast.LENGTH_SHORT).show();
                         }
                     }).addOnFailureListener(e -> {
                         Toast.makeText(RoomActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();

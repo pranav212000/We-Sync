@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:gravity="center"
     android:orientation="vertical"
     tools:context=".MainActivity">
@@ -15,39 +16,41 @@
         android:hint="Room Id"
         android:text="oykkxnu" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/joinRoom"
         android:layout_width="wrap_content"
+        app:cornerRadius="8dp"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        android:background="@drawable/button"
+        android:backgroundTint="@color/colorPrimary"
         android:paddingHorizontal="10dp"
         android:text="JOIN ROOM"
-        android:textColor="@color/colorAccent" />
+        android:textColor="@color/white" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/createRoom"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        android:background="@drawable/button"
+        app:cornerRadius="8dp"
+        android:backgroundTint="@color/colorPrimary"
         android:bottomLeftRadius="6dp"
         android:bottomRightRadius="8dp"
         android:paddingHorizontal="10dp"
         android:text="CREATE ROOM"
-        android:textColor="@color/colorAccent"
+        android:textColor="@color/white"
         android:topLeftRadius="4dp"
         android:topRightRadius="10dp" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/logOut"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        android:background="@drawable/button"
+        android:backgroundTint="@color/dark_slate_gray"
         android:paddingHorizontal="10dp"
         android:text="LOG OUT"
-        android:textColor="@color/red" />
+        android:textColor="@color/white" />
 
 
 </LinearLayout>

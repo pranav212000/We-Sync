@@ -98,8 +98,8 @@
             android:background="@drawable/button"
             android:paddingLeft="20dp"
             android:paddingRight="20dp"
-            android:text="sign in"
-            android:textColor="#777" />
+            android:text="sign up"
+            android:textColor="@color/white" />
 
         <TextView
             android:id="@+id/signIn"

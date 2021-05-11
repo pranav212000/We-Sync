@@ -41,8 +41,7 @@ public class Constants {
 
     public static String getUTCdatetimeAsString() {
         final SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
-//        TODO maybe change from IST to UTC later on!
-        sdf.setTimeZone(TimeZone.getTimeZone("IST"));
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
         final String utcTime = sdf.format(new Date());
 
         return utcTime;

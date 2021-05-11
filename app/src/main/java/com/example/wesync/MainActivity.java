@@ -149,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
 
         binding.createRoom.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                progressDialog.setMessage("Registering Please Wait...");
+                progressDialog.setMessage("Creating room, Please Wait...");
                 progressDialog.show();
                 final String roomId = generateRoomId();
                 Room room = new Room(roomId, currentUser.getUserName(), "", false, Timestamp.now(), false, 0, new ArrayList<>(), 0, currentUser.getUserName());

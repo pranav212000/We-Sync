@@ -9,6 +9,8 @@ import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -222,14 +224,13 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
             mAccessToken = response.getAccessToken();
             editor.apply();
         } else if (requestCode == AUTH_CODE_REQUEST_CODE) {
-            mAccessCode = response.getCode();
-            final SharedPreferences preferences = this.getSharedPreferences("prefs", MODE_PRIVATE);
+            final SharedPreferences preferences = this.getSharedPreferences(Constants.PREFERENCES, MODE_PRIVATE);
             final SharedPreferences.Editor editor = preferences.edit();
             editor.putString("code", response.getCode());
             mAccessCode = response.getCode();
             editor.apply();
 
-
+//          To get refresh token, access token using access code received after openLoginActivity
             HttpUrl url = new HttpUrl.Builder()
                     .scheme("https")
                     .host("accounts.spotify.com")

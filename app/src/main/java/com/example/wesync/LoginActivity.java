@@ -72,7 +72,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
         progressDialog = new ProgressDialog(this);
         binding.signIn.setOnClickListener(this);
-        //binding.signUp.setOnClickListener(this);
+        binding.signUp.setOnClickListener(this);
     }
 
     //method for user login
@@ -92,7 +92,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
         //if the email and password are not empty
         //displaying a progress dialog
-        progressDialog.setMessage("Registering Please Wait...");
+        progressDialog.setMessage("Logging in Please Wait...");
         progressDialog.show();
         //logging in the user
         firebaseAuth.signInWithEmailAndPassword(email, password)
@@ -162,7 +162,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             editor.apply();
         } else if (requestCode == AUTH_CODE_REQUEST_CODE) {
             mAccessCode = response.getCode();
-            final SharedPreferences preferences = this.getSharedPreferences("prefs", MODE_PRIVATE);
+            final SharedPreferences preferences = this.getSharedPreferences(Constants.PREFERENCES, MODE_PRIVATE);
             final SharedPreferences.Editor editor = preferences.edit();
             editor.putString("code", response.getCode());
             mAccessCode = response.getCode();
